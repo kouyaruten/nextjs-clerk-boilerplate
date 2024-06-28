@@ -1,40 +1,39 @@
-import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
+const isPublicRoutes = createRouteMatcher(["/", "/api/(.*)"]);
 // See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your Middleware
-export default authMiddleware({
-  publicRoutes: ["/", "/api/(.*)"],
-  afterAuth: async (auth, req) => {
-    if (!auth.userId && !auth.isPublicRoute) {
-      return redirectToSignIn({ returnBackUrl: req.url });
-    }
+export default clerkMiddleware(async (auth, req) => {
+  const userId = !!auth()?.userId;
+  const stripePayment = auth()?.sessionClaims?.publicMetadata.stripe?.payment;
 
-    if (
-      auth.userId &&
-      req.nextUrl.pathname === "/members" &&
-      auth.sessionClaims.publicMetadata.stripe?.payment !== "paid"
-    ) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+  if (!userId && !isPublicRoutes(req)) {
+    return auth().redirectToSignIn();
+  }
 
-    if (
-      auth.userId &&
-      req.nextUrl.pathname === "/members" &&
-      auth.sessionClaims.publicMetadata.stripe?.payment === "paid"
-    ) {
-      return NextResponse.next();
-    }
+  if (
+    auth()?.userId &&
+    req.nextUrl.pathname === "/members" &&
+    stripePayment !== "paid"
+  ) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
 
-    if (auth.userId && req.nextUrl.pathname !== "/members") {
-      return NextResponse.next();
-    }
+  if (
+    userId &&
+    req.nextUrl.pathname === "/members" &&
+    stripePayment === "paid"
+  ) {
+    return;
+  }
 
-    if (auth.isPublicRoute) {
-      return NextResponse.next();
-    }
-  },
+  if (userId && req.nextUrl.pathname !== "/members") {
+    return;
+  }
+
+  if (isPublicRoutes(req)) {
+    return;
+  }
 });
 
 export const config = {

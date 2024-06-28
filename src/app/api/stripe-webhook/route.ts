@@ -1,9 +1,9 @@
-import { clerkClient } from "@clerk/nextjs";
+import { createClerkClient } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2023-10-16",
+  apiVersion: "2024-06-20",
 });
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     case "checkout.session.completed":
       const session = event.data.object;
       console.log(`Payment successful for session ID: ${session.id}`);
-      clerkClient.users.updateUserMetadata(
+      createClerkClient({}).users.updateUserMetadata(
         event.data.object.metadata?.userId as string,
         {
           publicMetadata: {

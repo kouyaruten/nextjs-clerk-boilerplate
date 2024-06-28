@@ -17,7 +17,7 @@ export default function Home() {
             justifyContent: "center",
           }}
         >
-          <SignIn redirectUrl="/" />
+          <SignIn forceRedirectUrl="/" />
         </div>
       ) : (
         <div>
