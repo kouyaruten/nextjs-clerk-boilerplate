@@ -24,9 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <header className="flex justify-end p-5 pr-10">
+          {/* <header className="flex justify-end p-5 pr-10">
             <UserButton />
-          </header>
+          </header> */}
           {children}
         </body>
       </html>
