@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { UserButton, useUser } from "@clerk/nextjs";
 import CheckoutButton from "../../components/stripe-payment";
+import Link from "next/link";
 
 // 定义 Stripe 元数据的类型
 type StripeMetadata = {
@@ -68,6 +69,14 @@ export default function DashboardPage() {
             </div>
           </div>
           {stripeData?.subscriptionStatus !== "active" && <CheckoutButton />}
+          {stripeData?.subscriptionStatus === "active" && (
+            <Link
+              href="https://billing.stripe.com/p/login/test_7sI4ia4KYchR3nO3cc"
+              target="_blank"
+            >
+              Manage subscription
+            </Link>
+          )}
         </div>
       </div>
     </div>
