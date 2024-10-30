@@ -1,6 +1,7 @@
 'use client';
 import Image from 'next/image';
 import { UserButton, useUser } from '@clerk/nextjs';
+import CheckoutButton from '../../components/stripe-payment';
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -39,6 +40,8 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
+
+          {!user?.publicMetadata?.stripe?.status && <CheckoutButton />}
         </div>
       </div>
     </div>

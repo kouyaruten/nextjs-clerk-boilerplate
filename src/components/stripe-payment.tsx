@@ -1,8 +1,6 @@
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe } from '@stripe/stripe-js';
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
-);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
 export default function CheckoutButton() {
   const handleCheckout = async () => {
@@ -13,10 +11,10 @@ export default function CheckoutButton() {
       }
 
       const { session } = await (
-        await fetch("/api/stripe-payment", {
-          method: "POST",
+        await fetch('/api/stripe-payment', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             quantity: 1,
