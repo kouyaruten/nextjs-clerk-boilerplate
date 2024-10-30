@@ -45,19 +45,51 @@ export async function POST(req: NextRequest) {
     case "checkout.session.completed":
       const session = event.data.object;
       console.log(`Payment successful for session ID: ${session.id}`);
-      clerkClient.users.updateUserMetadata(
-        event.data.object.metadata?.userId as string,
+      await clerkClient.users.updateUserMetadata(
+        session.metadata?.userId as string,
         {
           publicMetadata: {
             stripe: {
+              customerId: session.customer as string,
+              subscriptionId: session.subscription as string,
               status: session.status,
               payment: session.payment_status,
             },
           },
         }
       );
-
       break;
+
+    case "customer.subscription.updated":
+      const subscription = event.data.object;
+      await clerkClient.users.updateUserMetadata(
+        subscription.metadata?.userId as string,
+        {
+          publicMetadata: {
+            stripe: {
+              subscriptionStatus: subscription.status,
+              currentPeriodEnd: subscription.current_period_end,
+            },
+          },
+        }
+      );
+      break;
+
+    case "customer.subscription.deleted":
+      const canceledSubscription = event.data.object;
+      await clerkClient.users.updateUserMetadata(
+        canceledSubscription.metadata?.userId as string,
+        {
+          publicMetadata: {
+            stripe: {
+              subscriptionStatus: "canceled",
+              canceledAt: canceledSubscription.canceled_at,
+            },
+          },
+        }
+      );
+      break;
+
     default:
       console.warn(`Unhandled event type: ${event.type}`);
   }
