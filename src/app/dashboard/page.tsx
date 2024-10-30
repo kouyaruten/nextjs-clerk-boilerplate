@@ -6,10 +6,10 @@ import CheckoutButton from "../../components/stripe-payment";
 // 定义 Stripe 元数据的类型
 type StripeMetadata = {
   stripe: {
-    status: string;
-    payment: string;
     currentPeriodEnd: number;
     subscriptionStatus: string;
+    planName: string;
+    monthlyPrice: number;
   };
 };
 
@@ -46,14 +46,6 @@ export default function DashboardPage() {
             <h3 className="text-xl font-semibold">Membership Status</h3>
             <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
               <p>
-                <span className="font-semibold">Status:</span>{" "}
-                {stripeData?.status || "Not available"}
-              </p>
-              <p>
-                <span className="font-semibold">Payment:</span>{" "}
-                {stripeData?.payment || "Not available"}
-              </p>
-              <p>
                 <span className="font-semibold">Subscription Status:</span>{" "}
                 {stripeData?.subscriptionStatus || "Not available"}
               </p>
@@ -64,6 +56,14 @@ export default function DashboardPage() {
                       stripeData.currentPeriodEnd * 1000
                     ).toLocaleDateString()
                   : "Not available"}
+              </p>
+              <p>
+                <span className="font-semibold">Plan Name:</span>{" "}
+                {stripeData?.planName || "Not available"}
+              </p>
+              <p>
+                <span className="font-semibold">Monthly Price:</span>{" "}
+                {stripeData?.monthlyPrice}
               </p>
             </div>
           </div>

@@ -1,98 +1,90 @@
+import { headers } from "next/headers";
 import { clerkClient } from "@clerk/nextjs";
-import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import { NextResponse } from "next/server";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2023-10-16",
-});
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export async function POST(req: NextRequest) {
-  if (req === null)
-    throw new Error(`Missing userId or request`, { cause: { req } });
-
-  const stripeSignature = req.headers.get("stripe-signature");
-
-  if (stripeSignature === null) throw new Error("stripeSignature is null");
+export async function POST(req: Request) {
+  const body = await req.text();
+  const signature = headers().get("Stripe-Signature") as string;
 
   let event;
+
   try {
     event = stripe.webhooks.constructEvent(
-      await req.text(),
-      stripeSignature,
-      webhookSecret
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (error) {
-    if (error instanceof Error)
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: 400,
-        }
-      );
+    return new NextResponse("Webhook error", { status: 400 });
   }
 
-  if (event === undefined) throw new Error(`event is undefined`);
+  const session = event.data.object as any;
+  const userId = session?.metadata?.userId;
+
+  if (!userId) {
+    return new NextResponse("No user id", { status: 400 });
+  }
+
+  // 处理不同的 webhook 事件
   switch (event.type) {
     case "checkout.session.completed":
-      const session = event.data.object;
-      console.log(`Payment successful for session ID: ${session.id}`);
-      await clerkClient.users.updateUserMetadata(
-        session.metadata?.userId as string,
-        {
-          publicMetadata: {
-            stripe: {
-              customerId: session.customer as string,
-              subscriptionId: session.subscription as string,
-              status: session.status,
-              payment: session.payment_status,
-            },
+      const subscriptionId = session.subscription;
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const priceId = subscription.items.data[0].price.id;
+      const price = await stripe.prices.retrieve(priceId);
+      const product = await stripe.products.retrieve(price.product);
+      await clerkClient.users.updateUser(userId, {
+        publicMetadata: {
+          stripe: {
+            currentPeriodEnd: subscription.current_period_end,
+            subscriptionStatus: "active",
+            priceId: priceId,
+            planName: product.name,
+            monthlyPrice: price.unit_amount / 100,
           },
-        }
-      );
+        },
+      });
       break;
 
     case "customer.subscription.updated":
-      const subscription = event.data.object;
-      await clerkClient.users.updateUserMetadata(
-        subscription.metadata?.userId as string,
-        {
-          publicMetadata: {
-            stripe: {
-              subscriptionStatus: subscription.status,
-              currentPeriodEnd: subscription.current_period_end,
-            },
-          },
-        }
+      const updatedSubscription = await stripe.subscriptions.retrieve(
+        session.id
       );
+      const updatedPriceId = updatedSubscription.items.data[0].price.id;
+      const updatedPrice = await stripe.prices.retrieve(updatedPriceId);
+      const updatedProduct = await stripe.products.retrieve(
+        updatedPrice.product
+      );
+
+      await clerkClient.users.updateUser(userId, {
+        publicMetadata: {
+          stripe: {
+            currentPeriodEnd: updatedSubscription.current_period_end,
+            subscriptionStatus: updatedSubscription.status,
+            priceId: updatedPriceId,
+            planName: updatedProduct.name,
+            monthlyPrice: updatedPrice.unit_amount / 100,
+          },
+        },
+      });
       break;
 
     case "customer.subscription.deleted":
-      const canceledSubscription = event.data.object;
-      await clerkClient.users.updateUserMetadata(
-        canceledSubscription.metadata?.userId as string,
-        {
-          publicMetadata: {
-            stripe: {
-              subscriptionStatus: "canceled",
-              canceledAt: canceledSubscription.canceled_at,
-            },
+      await clerkClient.users.updateUser(userId, {
+        publicMetadata: {
+          stripe: {
+            currentPeriodEnd: 0,
+            subscriptionStatus: "canceled",
+            priceId: null,
+            planName: "Free",
+            monthlyPrice: 0,
           },
-        }
-      );
+        },
+      });
       break;
-
-    default:
-      console.warn(`Unhandled event type: ${event.type}`);
   }
 
-  NextResponse.json({ status: 200, message: "success" });
+  return new NextResponse(null, { status: 200 });
 }
