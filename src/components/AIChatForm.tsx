@@ -3,8 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import React, { useState } from "react";
+import { useUser } from "@clerk/nextjs";
 
 const AIChatForm = () => {
+  const { user } = useUser();
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +52,7 @@ const AIChatForm = () => {
 
   return (
     <>
+      <p>Credits: {(user?.publicMetadata?.credits as number) || 0}</p>
       <div className="flex w-full max-w-sm items-center space-x-2">
         <Input
           className="w-full"
@@ -68,7 +71,7 @@ const AIChatForm = () => {
         </Button>
       </div>
       <p className="font-mono text-sm text-gray-700">
-        {isLoading
+        {isLoading && response === ""
           ? "Loading..."
           : response
           ? response

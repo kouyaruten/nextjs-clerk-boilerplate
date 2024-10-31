@@ -96,7 +96,6 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Credits</h2>
           <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2 w-[600px]">
-            <p>Credits: {user?.publicMetadata?.credits || 0}</p>
             <AIChatForm />
           </div>
         </div>
