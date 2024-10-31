@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs';
+import { clerkClient } from '@clerk/nextjs';
 import { NextRequest } from 'next/server';
 import axios from 'axios';
 
@@ -6,7 +7,19 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 export async function POST(req: NextRequest) {
+  // Deduct credits
   const { userId } = auth();
+  const currentCredits = user?.publicMetadata?.credits || 0;
+  if (currentCredits <= 0) {
+    return new Response('No credits left', { status: 400 });
+  }
+  await clerkClient.users.updateUser(userId, {
+    publicMetadata: {
+      credits: currentCredits - 1,
+    },
+  });
+
+  // Get message
   const body = await req.json();
   const message = body.message;
   const data = {
@@ -21,20 +34,7 @@ export async function POST(req: NextRequest) {
       },
     ],
     model: 'deepseek-chat',
-    frequency_penalty: 0,
-    max_tokens: 2048,
-    presence_penalty: 0,
-    response_format: {
-      type: 'text',
-    },
-    stop: null,
     stream: true,
-    temperature: 1,
-    top_p: 1,
-    tools: null,
-    tool_choice: 'none',
-    logprobs: false,
-    top_logprobs: null,
   };
 
   const config = {
