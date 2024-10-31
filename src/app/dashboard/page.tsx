@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Loader from '@/components/ui/loader';
 3;
 import { useState } from 'react';
+import AIChatForm from '@/components/AIChatForm';
 
 // 定义 Stripe 元数据的类型
 type StripeMetadata = {
@@ -34,12 +35,11 @@ export default function DashboardPage() {
 
   return (
     <div className="grid col-auto place-content-center p-8">
-      <div className="flex flex-col items-center gap-4">
+      <div className="container flex flex-col items-start gap-4">
         <UserButton />
+        <h2 className="text-2xl font-bold tracking-tight">User Information</h2>
 
-        <div className="mt-8 space-y-4">
-          <h2 className="text-2xl font-bold">User Information</h2>
-
+        <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2 w-[600px]">
           {/* User Details */}
           <div className="space-y-2">
             <p>
@@ -52,39 +52,48 @@ export default function DashboardPage() {
               <span className="font-semibold">User ID:</span> {user?.id}
             </p>
           </div>
+        </div>
 
-          {/* Stripe Metadata */}
-          <div className="mt-6">
-            <h3 className="text-xl font-semibold">Membership Status</h3>
-            <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
-              <p>
-                <span className="font-semibold">Subscription Status:</span>{' '}
-                {stripeData?.subscriptionStatus || 'Not available'}
-              </p>
-              <p>
-                <span className="font-semibold">Current Period End:</span>{' '}
-                {stripeData?.currentPeriodEnd
-                  ? new Date(stripeData.currentPeriodEnd * 1000).toLocaleDateString()
-                  : 'Not available'}
-              </p>
-              <p>
-                <span className="font-semibold">Plan Name:</span> {stripeData?.planName || 'Not available'}
-              </p>
-              <p>
-                <span className="font-semibold">Monthly Price:</span> {stripeData?.monthlyPrice}
-              </p>
-            </div>
+        {/* Stripe Metadata */}
+        <div className="mt-6">
+          <h3 className="text-2xl font-bold tracking-tight">Membership Status</h3>
+          <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2 w-[600px]">
+            <p>
+              <span className="font-semibold">Subscription Status:</span>{' '}
+              {stripeData?.subscriptionStatus || 'Not available'}
+            </p>
+            <p>
+              <span className="font-semibold">Current Period End:</span>{' '}
+              {stripeData?.currentPeriodEnd
+                ? new Date(stripeData.currentPeriodEnd * 1000).toLocaleDateString()
+                : 'Not available'}
+            </p>
+            <p>
+              <span className="font-semibold">Plan Name:</span> {stripeData?.planName || 'Not available'}
+            </p>
+            <p>
+              <span className="font-semibold">Monthly Price:</span> {stripeData?.monthlyPrice}
+            </p>
+            {stripeData?.subscriptionStatus !== 'active' && <CheckoutButton />}
+            {stripeData?.subscriptionStatus === 'active' && (
+              <Link
+                href="https://billing.stripe.com/p/login/test_7sI4ia4KYchR3nO3cc"
+                target="_blank"
+                className="text-blue-500 hover:underline"
+              >
+                Manage subscription ↗
+              </Link>
+            )}
           </div>
-          {stripeData?.subscriptionStatus !== 'active' && <CheckoutButton />}
-          {stripeData?.subscriptionStatus === 'active' && (
-            <Link
-              href="https://billing.stripe.com/p/login/test_7sI4ia4KYchR3nO3cc"
-              target="_blank"
-              className="text-blue-500 hover:underline"
-            >
-              Manage subscription ↗
-            </Link>
-          )}
+        </div>
+
+        {/* Credits info */}
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Credits</h2>
+          <div className="mt-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2 w-[600px]">
+            <p>Credits: {user?.publicMetadata?.credits || 0}</p>
+            <AIChatForm />
+          </div>
         </div>
       </div>
     </div>
