@@ -44,7 +44,7 @@ const AIChatForm = () => {
       console.error("Error sending message to backend:", error);
       setResponse("Error: Failed to get response from AI");
     } finally {
-      setIsLoading(true);
+      setIsLoading(false);
     }
   };
 
@@ -68,7 +68,11 @@ const AIChatForm = () => {
         </Button>
       </div>
       <p className="font-mono text-sm text-gray-700">
-        {response ? response : "Try sending a message to see the AI response."}
+        {isLoading
+          ? "Loading..."
+          : response
+          ? response
+          : "Try sending a message to see the AI response."}
       </p>
     </>
   );
