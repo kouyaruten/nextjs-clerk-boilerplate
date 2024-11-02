@@ -35,8 +35,14 @@ export async function POST(req: Request) {
       const priceId = subscription.items.data[0].price.id;
       const price = await stripe.prices.retrieve(priceId);
       const product = await stripe.products.retrieve(price.product);
+
+      // Get existing metadata to preserve other fields
+      const user = await clerkClient.users.getUser(userId);
+      const existingMetadata = user.publicMetadata;
+
       await clerkClient.users.updateUser(userId, {
         publicMetadata: {
+          ...existingMetadata,
           stripe: {
             currentPeriodEnd: subscription.current_period_end,
             subscriptionStatus: "active",
@@ -44,6 +50,7 @@ export async function POST(req: Request) {
             planName: product.name,
             monthlyPrice: price.unit_amount / 100,
           },
+          credits: product.name === "Pro" ? 100 : 10, // Adjust credit amounts as needed
         },
       });
       break;
@@ -58,8 +65,13 @@ export async function POST(req: Request) {
         updatedPrice.product
       );
 
+      // Get existing metadata for update case
+      const updatedUser = await clerkClient.users.getUser(userId);
+      const updatedExistingMetadata = updatedUser.publicMetadata;
+
       await clerkClient.users.updateUser(userId, {
         publicMetadata: {
+          ...updatedExistingMetadata,
           stripe: {
             currentPeriodEnd: updatedSubscription.current_period_end,
             subscriptionStatus: updatedSubscription.status,
@@ -67,13 +79,19 @@ export async function POST(req: Request) {
             planName: updatedProduct.name,
             monthlyPrice: updatedPrice.unit_amount / 100,
           },
+          credits: updatedProduct.name === "Pro" ? 100 : 10, // Adjust credit amounts as needed
         },
       });
       break;
 
     case "customer.subscription.deleted":
+      // Get existing metadata for deletion case
+      const deletedUser = await clerkClient.users.getUser(userId);
+      const deletedExistingMetadata = deletedUser.publicMetadata;
+
       await clerkClient.users.updateUser(userId, {
         publicMetadata: {
+          ...deletedExistingMetadata,
           stripe: {
             currentPeriodEnd: 0,
             subscriptionStatus: "canceled",
@@ -81,6 +99,7 @@ export async function POST(req: Request) {
             planName: "Free",
             monthlyPrice: 0,
           },
+          credits: 0, // Reset credits when subscription is canceled
         },
       });
       break;
