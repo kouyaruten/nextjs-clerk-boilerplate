@@ -30,7 +30,8 @@ export default function Home() {
                   <span className="text-indigo-500 font-bold">boilerplate</span>
                 </h1>
                 <p className="mt-8 text-pretty text-lg text-gray-500 dark:text-gray-400 sm:text-xl/8">
-                  With Clerk authentication, Stripe payment, and Shadcn/UI
+                  With Clerk authentication, Stripe payment, ChatGPT streaming
+                  and Shadcn/UI.
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                   <a
