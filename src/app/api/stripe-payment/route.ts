@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
           userId, // 在订阅对象上也添加 userId
         },
       },
-      success_url: `${origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/dashboard`,
       cancel_url: `${origin}/dashboard`,
     });
 
